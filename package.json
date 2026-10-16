@@ -14,9 +14,10 @@
     "db:migrate:status": "prisma migrate status",
     "db:migrate-sqlite": "node --experimental-sqlite --experimental-strip-types scripts/migrate-sqlite-to-postgres.ts",
     "db:create-admin": "bun run scripts/create-admin.ts",
+    "db:reset-admin-password": "bun run scripts/reset-admin-password.ts",
     "db:migrate:dev": "prisma migrate dev",
     "test:release-scripts": "bash tests/database-runtime-build.sh && bash tests/start-runtime-env.sh",
-    "test:unit": "node --experimental-strip-types tests/validation.test.mjs"
+    "test:unit": "node --experimental-strip-types tests/validation.test.mjs && node --experimental-strip-types tests/auth-security.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

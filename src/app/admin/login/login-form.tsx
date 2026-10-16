@@ -125,6 +125,9 @@ export function AdminLoginForm() {
                 "Sign in"
               )}
             </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Password recovery is handled securely by the infrastructure owner; no public reset link is issued.
+            </p>
           </form>
         </CardContent>
       </Card>

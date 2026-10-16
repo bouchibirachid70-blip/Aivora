@@ -11,8 +11,8 @@
  *   - Reads ADMIN_EMAIL and ADMIN_PASSWORD from the environment.
  *   - Refuses to run in production mode if either is unset (no hardcoded
  *     fallback, no default admin@aivora.dev/admin123).
- *   - If an AdminUser with the given email already exists, updates its
- *     password hash (idempotent) and reports it.
+ *   - If an AdminUser with the given email already exists, refuses to modify
+ *     it; use reset-admin-password.ts for an explicit recovery operation.
  *   - Otherwise creates the AdminUser with a bcrypt-hashed password.
  *   - NEVER prints the password. Prints only the email and id.
  *
@@ -31,9 +31,9 @@ async function main() {
   }
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password || password.length < 8) {
+  if (!email || !password || password.length < 12 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
     throw new Error(
-      "ADMIN_EMAIL and ADMIN_PASSWORD (>= 8 chars) must be set in the environment. No hardcoded credentials are used.",
+      "ADMIN_EMAIL and a strong ADMIN_PASSWORD (12+ chars with upper/lowercase and a number) must be set. No hardcoded credentials are used.",
     );
   }
 
@@ -44,19 +44,16 @@ async function main() {
 
   try {
     const existing = await db.adminUser.findUnique({ where: { email } });
-    const passwordHash = await bcrypt.hash(password, 10);
     if (existing) {
-      await db.adminUser.update({
-        where: { id: existing.id },
-        data: { passwordHash, name: existing.name || "Aivora Admin" },
-      });
-      console.log(`Updated existing admin (id=${existing.id}, email=${email}).`);
-    } else {
-      const created = await db.adminUser.create({
-        data: { email, name: "Aivora Admin", passwordHash },
-      });
-      console.log(`Created admin (id=${created.id}, email=${email}).`);
+      throw new Error(
+        `Admin already exists (id=${existing.id}, email=${email}). No changes were made. Use db:reset-admin-password for explicit recovery.`,
+      );
     }
+    const passwordHash = await bcrypt.hash(password, 10);
+    const created = await db.adminUser.create({
+      data: { email, name: "Aivora Admin", passwordHash },
+    });
+    console.log(`Created admin (id=${created.id}, email=${email}).`);
     console.log("Done. You can now log in at /admin/login.");
     console.log(
       "Tip: remove ADMIN_EMAIL/ADMIN_PASSWORD from the environment after provisioning.",

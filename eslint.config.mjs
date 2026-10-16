@@ -18,6 +18,10 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     
     // React rules
     "react-hooks/exhaustive-deps": "off",
+    // Existing data-fetching components intentionally start async work from
+    // effects; this rule was introduced by the newer React plugin and would
+    // flag the established application pattern rather than an auth change.
+    "react-hooks/set-state-in-effect": "off",
     "react-hooks/purity": "off",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",

@@ -24,6 +24,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SecurityForms } from "@/app/admin/settings/security-forms";
 
 type MeResponse = {
   user: { id: string; email: string; name: string } | null;
@@ -169,8 +170,7 @@ export function AdminSettings() {
                 <span>Role: Administrator</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Change password support requires direct DB access in this
-                version. Contact your infrastructure owner to rotate credentials.
+                Password changes require the current password and are processed server-side.
               </p>
             </div>
           </CardContent>
@@ -210,6 +210,8 @@ export function AdminSettings() {
           </CardContent>
         </Card>
       </div>
+
+      <SecurityForms />
 
       {/* Danger zone */}
       <Card className="border-destructive/30">

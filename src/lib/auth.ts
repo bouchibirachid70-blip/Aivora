@@ -74,7 +74,18 @@ export async function getSession(): Promise<SessionUser | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return verifyToken(token);
+  const session = verifyToken(token);
+  if (!session) return null;
+  try {
+    const user = await db.adminUser.findUnique({
+      where: { id: session.id },
+      select: { id: true, email: true, name: true },
+    });
+    return user;
+  } catch {
+    // Fail closed if the account cannot be verified against the database.
+    return null;
+  }
 }
 
 export async function requireAdmin(): Promise<SessionUser> {
@@ -108,15 +119,14 @@ export async function clearSessionCookie() {
  *   credentials. Operators must provision the initial admin out-of-band (e.g.
  *   via the seed script run in a trusted environment) and set ADMIN_EMAIL /
  *   ADMIN_PASSWORD as env vars — they are NOT read at runtime here.
- * - In development it auto-creates an admin from env vars if provided, or a
- *   clearly-labelled dev admin. This dev credential is restricted to
- *   development by `NODE_ENV` and cannot silently become the production
- *   credential.
+ * - In development it auto-creates an admin only when both provisioning
+ *   variables are explicitly provided. There is no hardcoded dev password.
  */
 export async function ensureDefaultAdmin() {
   if (IS_PRODUCTION) return;
-  const email = process.env.ADMIN_EMAIL || "admin@aivora.dev";
-  const password = process.env.ADMIN_PASSWORD || "admin123";
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) return;
   const existing = await db.adminUser.findUnique({ where: { email } });
   if (!existing) {
     await db.adminUser.create({
