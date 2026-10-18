@@ -34,6 +34,7 @@ export function ToolCard({ tool }: { tool: ToolCardData }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
+      prefetch={false}
       className="group relative flex flex-col rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
     >
       <div className="flex items-start gap-3">
