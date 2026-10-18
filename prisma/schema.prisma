@@ -29,6 +29,10 @@ model Tool {
 
   @@index([categoryId])
   @@index([status])
+  @@index([status, clicksCount])
+  @@index([status, createdAt])
+  @@index([categoryId, status, clicksCount])
+  @@index([pricing, status])
 }
 
 model Category {

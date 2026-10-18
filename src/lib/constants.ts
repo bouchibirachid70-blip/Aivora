@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 
 /** Known ad positions wired into the public site (used for autocomplete). */
 export const AD_POSITIONS = [
@@ -27,20 +28,30 @@ export const SUBMISSION_STATUSES = ["pending", "approved", "rejected"] as const;
 
 /** Get active ad slots for a given position, server-side. */
 export async function getActiveAdSlots(position: string) {
-  return db.adSlot.findMany({
-    where: { position, isActive: true },
-    orderBy: { createdAt: "asc" },
-  });
+  return unstable_cache(
+    () =>
+      db.adSlot.findMany({
+        where: { position, isActive: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ["public-ad-slots", position],
+    { revalidate: 60 },
+  )();
 }
 
 /** Get categories with tool counts (for navigation/cards). */
 export async function getCategoriesWithCounts() {
-  const categories = await db.category.findMany({
-    include: {
-      _count: { select: { tools: { where: { status: "approved" } } } },
-    },
-    orderBy: { name: "asc" },
-  });
+  const categories = await unstable_cache(
+    () =>
+      db.category.findMany({
+        include: {
+          _count: { select: { tools: { where: { status: "approved" } } } },
+        },
+        orderBy: { name: "asc" },
+      }),
+    ["public-categories-with-counts"],
+    { revalidate: 60 },
+  )();
   return categories.map((c) => ({
     id: c.id,
     name: c.name,

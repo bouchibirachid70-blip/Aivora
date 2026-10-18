@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { ArrowRight, Search, Sparkles, TrendingUp } from "lucide-react";
 import { db } from "@/lib/db";
 import { AdSlot } from "@/components/ad-slot";
@@ -19,20 +20,36 @@ export const revalidate = 60;
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featuredTools, categories, latestArticles, totalTools] = await Promise.all([
-    db.tool.findMany({
+  const getFeaturedTools = unstable_cache(
+    () => db.tool.findMany({
       where: { status: "approved" },
       orderBy: { clicksCount: "desc" },
       take: 8,
       include: { category: true },
     }),
-    getCategoriesWithCounts(),
-    db.article.findMany({
+    ["public-featured-tools"],
+    { revalidate: 60 },
+  );
+  const getLatestArticles = unstable_cache(
+    () => db.article.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
-    db.tool.count({ where: { status: "approved" } }),
+    ["public-latest-articles"],
+    { revalidate: 60 },
+  );
+  const getTotalTools = unstable_cache(
+    () => db.tool.count({ where: { status: "approved" } }),
+    ["public-approved-tool-count"],
+    { revalidate: 60 },
+  );
+
+  const [featuredTools, categories, latestArticles, totalTools] = await Promise.all([
+    getFeaturedTools(),
+    getCategoriesWithCounts(),
+    getLatestArticles(),
+    getTotalTools(),
   ]);
 
   const jsonLd = {

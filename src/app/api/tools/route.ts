@@ -49,11 +49,20 @@ export async function GET(req: Request) {
     }),
   ]);
 
-  return NextResponse.json({
-    items: tools,
-    total,
-    page,
-    limit,
-    pages: Math.ceil(total / limit),
-  });
+  return NextResponse.json(
+    {
+      items: tools,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
+    {
+      headers: {
+        // Public directory data can be a few seconds stale; avoid repeating
+        // the same count + page query for every visitor at the Vercel edge.
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=300",
+      },
+    },
+  );
 }
